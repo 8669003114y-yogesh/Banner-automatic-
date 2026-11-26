@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>बॅनर मेकर</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c62828">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@700;800&family=Teko:wght@600&family=Baloo+2:wght@700;800&family=Yatra+One&family=Poppins:wght@700;800&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#c62828;--ink:#1f2328;--mut:#5f6770;--line:#e3e5e8;--bg:#f4f5f7}
+*{box-sizing:border-box}
+body{font-family:"Mukta","Noto Sans Devanagari",system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink);font-size:16px}
+header{background:var(--red);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+header h1{margin:0;font-size:22px}
+#installBtn{display:none;width:auto;margin:0;padding:8px 14px;background:#fff;color:var(--red)}
+.layout{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:16px;padding:16px;max-width:1300px;margin:0 auto}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.preview{order:-1}}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.card>summary{padding:12px 14px;font-weight:800;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+.card>summary::after{content:"＋";color:var(--mut)}
+.card[open]>summary::after{content:"－"}
+.card .body{padding:0 14px 14px}
+label{display:block;margin-top:10px;font-weight:700;font-size:14px}
+small,.hint{color:var(--mut);font-size:13px;font-weight:400}
+input,select,button,textarea{width:100%;padding:10px;margin-top:4px;font-size:16px;font-family:inherit;border:1px solid #c9ccd1;border-radius:8px;background:#fff}
+input[type=range]{padding:0}
+input[type=checkbox]{width:auto;margin:0 6px 0 0}
+.ck{display:flex;align-items:center;font-weight:400;margin-top:10px}
+button{background:var(--red);color:#fff;border:0;font-weight:800;cursor:pointer}
+button.alt{background:#37474f}
+button.ghost{background:#eef0f2;color:var(--ink)}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.row button{flex:none;width:auto;padding:10px 16px}
+.preview{text-align:center;position:sticky;top:8px;align-self:start}
+.preview .box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+canvas#c{max-width:100%;max-height:78vh;width:auto;height:auto;border:1px solid #bbb;background:#fff;touch-action:none;cursor:grab}
+#favs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#favs span{background:#fff3e0;border:1px solid #ffcc80;border-radius:16px;padding:4px 10px;font-size:14px;cursor:pointer}
+#status{font-size:14px;margin-top:8px;color:var(--mut);min-height:20px}
+textarea{min-height:110px}
+</style>
+</head>
+<body>
+<header><h1>बॅनर मेकर</h1><button id="installBtn">ॲप इन्स्टॉल करा</button></header>
+
+<div class="layout">
+<div class="controls">
+
+<details class="card" open><summary>१. फोटो आणि लोगो</summary><div class="body">
+ <label>फोटो निवडा</label><input type="file" id="photo" accept="image/*">
+ <label>फोटो मोठा-छोटा <small>(किंवा बॅनरवर माऊस चाक / दोन बोटे)</small></label>
+ <input type="range" id="zoom" min="0.5" max="3" step="0.05" value="1">
+ <button class="ghost" id="resetPhoto" style="margin-top:8px">फोटो मूळ जागी आणा</button>
+ <p class="hint">फोटो बॅनरवर बोटाने ओढून हलवता येतो.</p>
+ <label>लोगो (पर्यायी)</label><input type="file" id="logo" accept="image/*">
+</div></details>
+
+<details class="card" open><summary>२. मजकूर</summary><div class="body">
+ <label>भाषा</label>
+ <select id="lang"><option value="mr">मराठी</option><option value="hi">हिंदी</option><option value="en">English</option></select>
+ <label>नाव <small>(इंग्रजीत टाइप करा, स्पेस दाबा, मराठी/हिंदी होईल)</small></label>
+ <input id="name" value="योगेश" placeholder="उदा. yogesh" autocomplete="off" autocapitalize="off">
+ <label>कॅटेगरी</label>
+ <select id="cat"></select>
+ <label>तयार मजकूर</label>
+ <select id="preset"></select>
+ <label>मजकूर <small>(हवा तर स्वतः बदला)</small></label>
+ <input id="msg" autocomplete="off" autocapitalize="off">
+ <label>फोन नंबर (पर्यायी)</label><input id="phone" inputmode="tel">
+ <label>तारीख (पर्यायी)</label><input type="date" id="date">
+</div></details>
+
+<details class="card" open><summary>३. डिझाईन</summary><div class="body">
+ <label>साईझ</label>
+ <select id="size">
+  <option value="1080x1920">WhatsApp स्टेटस (1080×1920)</option>
+  <option value="1080x1080">Facebook / Instagram पोस्ट (1080×1080)</option>
+  <option value="2400x1200">मोठा फ्लेक्स प्रिंट (2400×1200)</option>
+ </select>
+ <label>डिझाईन क्रमांक (1 ते 500)</label>
+ <div class="row"><button class="alt" id="prev">◀</button><input type="number" id="design" value="1" min="1" max="500"><button class="alt" id="next">▶</button></div>
+ <div class="row" style="margin-top:8px"><button class="alt" id="rand" style="flex:1">कोणतीही डिझाईन</button><button class="ghost" id="fav" style="flex:1">⭐ आवडती सेव्ह</button></div>
+ <div id="favs"></div>
+ <label class="ck"><input type="checkbox" id="emoji" checked>सजावट (इमोजी) दाखवा</label>
+</div></details>
+
+<details class="card" open><summary>४. डाउनलोड</summary><div class="body">
+ <button id="dlPng">PNG डाउनलोड</button>
+ <button id="dlPdf" class="alt" style="margin-top:8px">PDF डाउनलोड</button>
+ <button id="dlAll" class="alt" style="margin-top:8px">तिन्ही साईझ (ZIP)</button>
+ <button id="share" class="ghost" style="margin-top:8px">WhatsApp / इतर ॲपवर शेअर</button>
+</div></details>
+
+<details class="card"><summary>५. एकदम अनेक बॅनर (बॅच)</summary><div class="body">
+ <p class="hint">प्रत्येक ओळीत: <b>नाव | मजकूर | फोटोचे फाईल नाव</b>. मजकूर आणि फोटो रिकामे सोडलं तर वरचा मजकूर आणि फोटो वापरला जातो.</p>
+ <textarea id="batchText" placeholder="ganesh | वाढदिवसाच्या शुभेच्छा | ganesh.jpg&#10;sneha&#10;rahul | | rahul.png"></textarea>
+ <label>सर्व फोटो एकदम निवडा</label><input type="file" id="batchPhotos" accept="image/*" multiple>
+ <label class="ck"><input type="checkbox" id="batchVary">प्रत्येकाला वेगळी डिझाईन</label>
+ <button id="batchGo" style="margin-top:10px">सर्व बॅनर बनवा (ZIP)</button>
+</div></details>
+
+<div id="status"></div>
+</div>
+
+<div class="preview">
+ <div class="box"><canvas id="c"></canvas>
+ <p class="hint" style="margin:6px 0 0">बॅनरवर फोटो ओढून हलवा.</p></div>
+</div>
+</div>
+
+<script>
+"use strict";
+/* ---------- मूलभूत ---------- */
+const $=id=>document.getElementById(id);
+const cv=$('c');
+const FONTS=['Mukta','Baloo 2','Yatra One','Poppins','Teko'];
+const fontStack=f=>`"${f}","Noto Sans Devanagari","Mukta",sans-serif`;
+const EMOJI_FONT='"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+
+const CATS=[
+ {n:'जन्मदिन',e:['🎂','🎈','🎉'],p:{
+  mr:['वाढदिवसाच्या हार्दिक शुभेच्छा!','वाढदिवसाच्या खूप खूप शुभेच्छा','तुमचा दिवस आनंदाचा जावो'],
+  hi:['जन्मदिन की हार्दिक शुभकामनाएँ','जन्मदिन मुबारक हो','आपका दिन मंगलमय हो'],
+  en:['Happy Birthday','Many Happy Returns of the Day','Wishing you a wonderful day']}},
+ {n:'निवडणूक',e:['🇮🇳','🗳️','✋'],p:{
+  mr:['आपला हक्काचा उमेदवार','मतदान करा, विजयी करा','विकासाची साथ, जनतेचा हात'],
+  hi:['आपका अपना उम्मीदवार','वोट दें, विजयी बनाएँ','विकास का साथ, जनता का हाथ'],
+  en:['Your Own Candidate','Vote for Progress','Together for Development']}},
+ {n:'दुकान उद्घाटन',e:['🎊','🛍️','🪔'],p:{
+  mr:['भव्य उद्घाटन','शुभारंभ','आपल्या सेवेत, नवीन दुकान'],
+  hi:['भव्य उद्घाटन','शुभारंभ','आपकी सेवा में, नई दुकान'],
+  en:['Grand Opening','Inauguration Today','Now Open for You']}},
+ {n:'श्रद्धांजली',e:['🕯️','🙏','🌼'],p:{
+  mr:['भावपूर्ण श्रद्धांजली','विनम्र श्रद्धांजली','ईश्वर त्यांच्या आत्म्यास शांती देवो'],
+  hi:['भावपूर्ण श्रद्धांजलि','विनम्र श्रद्धांजलि','ईश्वर उनकी आत्मा को शांति दे'],
+  en:['Heartfelt Tributes','Rest in Peace','Forever in Our Hearts']}},
+ {n:'सण',e:['🪔','✨','🎆'],p:{
+  mr:['दिवाळीच्या हार्दिक शुभेच्छा','गणपती बाप्पा मोरया','गुढीपाडव्याच्या हार्दिक शुभेच्छा','नवरात्रीच्या हार्दिक शुभेच्छा','मकरसंक्रांतीच्या शुभेच्छा','नववर्षाच्या हार्दिक शुभेच्छा'],
+  hi:['दीपावली की हार्दिक शुभकामनाएँ','गणपति बप्पा मोरया','नवरात्रि की हार्दिक शुभकामनाएँ','होली की हार्दिक शुभकामनाएँ','नववर्ष की हार्दिक शुभकामनाएँ'],
+  en:['Happy Diwali','Ganpati Bappa Morya','Happy Navratri','Happy Holi','Happy New Year']}},
+ {n:'अभिनंदन',e:['🏆','🎉','👏'],p:{
+  mr:['हार्दिक अभिनंदन!','यशाबद्दल अभिनंदन','लग्नाच्या वाढदिवसाच्या शुभेच्छा'],
+  hi:['हार्दिक बधाई!','सफलता पर बधाई','शादी की सालगिरह की शुभकामनाएँ'],
+  en:['Congratulations!','Well Done on Your Success','Happy Anniversary']}}
+];
+
+const PAL=[
+ [['#ff6f00','#ffca28'],['#d81b60','#f8bbd0'],['#6a1b9a','#ce93d8'],['#00897b','#80cbc4'],['#1565c0','#90caf9'],['#e53935','#ffcdd2'],['#43a047','#c8e6c9'],['#f4511e','#ffab91'],['#3949ab','#9fa8da'],['#fb8c00','#ffe0b2']],
+ [['#ff9933','#138808'],['#0d47a1','#ffffff'],['#b71c1c','#ffeb3b'],['#1b5e20','#fff176'],['#e65100','#fff3e0'],['#4a148c','#ffd54f'],['#006064','#e0f7fa'],['#880e4f','#fce4ec'],['#263238','#ffab00'],['#bf360c','#ffe0b2']],
+ [['#b71c1c','#ffd600'],['#1a237e','#ffc107'],['#004d40','#ffeb3b'],['#311b92','#ffd740'],['#e65100','#fff59d'],['#c2185b','#fff9c4'],['#01579b','#ffee58'],['#33691e','#fff176'],['#3e2723','#ffca28'],['#880e4f','#ffe082']],
+ [['#212121','#9e9e9e'],['#37474f','#cfd8dc'],['#263238','#b0bec5'],['#3e2723','#d7ccc8'],['#1a1a1a','#eeeeee'],['#424242','#bdbdbd'],['#455a64','#eceff1'],['#4e342e','#efebe9'],['#2c3e50','#bdc3c7'],['#1c1c1c','#fafafa']],
+ [['#ff6f00','#d50000'],['#ffab00','#6a1b9a'],['#c51162','#ffd600'],['#00c853','#ffea00'],['#aa00ff','#ffd180'],['#d50000','#ffff00'],['#0091ea','#ffe57f'],['#ff3d00','#ffc400'],['#304ffe','#ffd740'],['#64dd17','#ff6d00']],
+ [['#283593','#ffd54f'],['#00695c','#ffe082'],['#ad1457','#ffcc80'],['#4527a0','#b39ddb'],['#1565c0','#ffe082'],['#2e7d32','#fff59d'],['#c62828','#ffe0b2'],['#00838f','#ffd54f'],['#6a1b9a','#ffab40'],['#37474f','#ffd54f']]
+];
+
+function rng(seed){let s=(seed*9301+49297)%233280;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function lum(hex){const n=parseInt(hex.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)}
+
+/* ---------- इंग्रजी -> मराठी/हिंदी (ट्रान्सलिटरेशन) ---------- */
+const NAMES={ganesh:'गणेश',rajesh:'राजेश',suresh:'सुरेश',ramesh:'रमेश',mahesh:'महेश',yogesh:'योगेश',prakash:'प्रकाश',sandeep:'संदीप',santosh:'संतोष',vijay:'विजय',ajay:'अजय',amit:'अमित',anil:'अनिल',sunil:'सुनील',deepak:'दीपक',rahul:'राहुल',sachin:'सचिन',sneha:'स्नेहा',pooja:'पूजा',priya:'प्रिया',anjali:'अंजली',sunita:'सुनीता',kavita:'कविता',shital:'शीतल',neha:'नेहा',swati:'स्वाती',rohit:'रोहित',nitin:'नितीन',pravin:'प्रवीण',sagar:'सागर',mangesh:'मंगेश',dinesh:'दिनेश',ravi:'रवी',kiran:'किरण',vikas:'विकास',manoj:'मनोज',mukesh:'मुकेश',shrikant:'श्रीकांत',sanjay:'संजय',ashok:'अशोक',mohan:'मोहन',sita:'सीता',radha:'राधा',lata:'लता',rekha:'रेखा',anita:'अनिता',sarika:'सारिका',ankita:'अंकिता',komal:'कोमल',mumbai:'मुंबई',pune:'पुणे',nagpur:'नागपूर',shivaji:'शिवाजी',maharaj:'महाराज',shri:'श्री',shree:'श्री',sau:'सौ',smt:'श्रीमती',dr:'डॉ.'};
+const CONS=[['ksh','क्ष'],['dny','ज्ञ'],['gny','ज्ञ'],['chh','छ'],['kh','ख'],['gh','घ'],['ch','च'],['jh','झ'],['Th','ठ'],['Dh','ढ'],['th','थ'],['dh','ध'],['ph','फ'],['bh','भ'],['sh','श'],['Sh','ष'],['ny','ञ'],['k','क'],['g','ग'],['j','ज'],['T','ट'],['D','ड'],['N','ण'],['t','त'],['d','द'],['n','न'],['p','प'],['f','फ'],['b','ब'],['m','म'],['y','य'],['r','र'],['l','ल'],['L','ळ'],['v','व'],['w','व'],['s','स'],['h','ह'],['c','क'],['q','क'],['x','क्स'],['z','ज']];
+const VOW=[['aa','आ','ा'],['ee','ई','ी'],['ii','ई','ी'],['oo','ऊ','ू'],['uu','ऊ','ू'],['ai','ऐ','ै'],['au','औ','ौ'],['a','अ',''],['i','इ','ि'],['u','उ','ु'],['e','ए','े'],['o','ओ','ो']];
+const STOPS=new Set(['क','ख','ग','घ','च','छ','ज','झ','ट','ठ','ड','ढ','त','थ','द','ध','प','फ','ब','भ']);
+function ruleTr(word){
+ const d=NAMES[word.toLowerCase()];if(d)return d;
+ const w=word[0].toLowerCase()+word.slice(1),toks=[];
+ for(let i=0;i<w.length;){
+  let hit=null;
+  for(const [k,v] of CONS){if(w.startsWith(k,i)){hit={t:'C',dev:v,len:k.length};break}}
+  if(!hit){const lw=w.toLowerCase();for(const [k,v] of CONS){if(k===k.toLowerCase()&&lw.startsWith(k,i)){hit={t:'C',dev:v,len:k.length};break}}}
+  if(!hit){const lw=w.toLowerCase();for(const [k,iv,mv] of VOW){if(lw.startsWith(k,i)){hit={t:'V',k,iv,mv,len:k.length};break}}}
+  if(!hit)hit={t:'O',dev:w[i],len:1};
+  toks.push(hit);i+=hit.len;
+ }
+ let out='',pend=false;
+ toks.forEach((tk,i)=>{
+  if(tk.t==='C'){
+   const next=toks[i+1];
+   if((tk.dev==='न'||tk.dev==='म')&&i>0&&next&&next.t==='C'&&STOPS.has(next.dev)&&toks[i-1].t==='V'){out+='ं';pend=false;return}
+   if(pend)out+='्';
+   out+=tk.dev;pend=true;
+  }else if(tk.t==='V'){
+   if(pend){if(tk.k==='a'){if(i===toks.length-1)out+='ा'}else out+=tk.mv}
+   else out+=tk.iv;
+   pend=false;
+  }else{out+=tk.dev;pend=false}
+ });
+ return out;
+}
+const trCache=new Map();
+try{const s=JSON.parse(localStorage.getItem('bm_tr')||'[]');s.forEach(([k,v])=>trCache.set(k,v))}catch(e){}
+function saveTrCache(){try{localStorage.setItem('bm_tr',JSON.stringify([...trCache].slice(-400)))}catch(e){}}
+async function googleTr(w,lang){
+ const key=lang+'|'+w.toLowerCase();
+ if(trCache.has(key))return trCache.get(key);
+ if(!navigator.onLine)return null;
+ try{
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),2500);
+  const r=await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(w)}&itc=${lang}-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8`,{signal:ctl.signal});
+  clearTimeout(t);
+  const j=await r.json();
+  if(j&&j[0]==='SUCCESS'){const v=j[1][0][1][0];if(v){trCache.set(key,v);saveTrCache();return v}}
+ }catch(e){}
+ return null;
+}
+const LATIN=/[A-Za-z]+/g;
+function toLang(text,lang){ // झटपट (ऑफलाइन) रूपांतर
+ if(lang==='en')return text;
+ return text.replace(LATIN,w=>trCache.get(lang+'|'+w.toLowerCase())||ruleTr(w));
+}
+async function toLangBest(text,lang){
+ if(lang==='en')return text;
+ const words=[...new Set(text.match(LATIN)||[])];
+ await Promise.all(words.map(w=>googleTr(w,lang)));
+ return toLang(text,lang);
+}
+
+/* ---------- स्थिती ---------- */
+const S={photo:null,logo:null,zoom:1,ox:0,oy:0,layout:null,batchPhotos:new Map(),presetIdx:0,msgIsPreset:true};
+let favs=[];
+const el={};
+['photo','zoom','resetPhoto','logo','lang','name','cat','preset','msg','phone','date','size','design','prev','next','rand','fav','favs','emoji','dlPng','dlPdf','dlAll','share','batchText','batchPhotos','batchVary','batchGo','status','installBtn'].forEach(id=>el[id]=$(id));
+
+function curState(over){
+ const lang=el.lang.value;
+ return Object.assign({
+  cat:+el.cat.value,num:Math.max(1,Math.min(500,+el.design.value||1)),
+  name:toLang(el.name.value.trim(),lang),msg:toLang(el.msg.value.trim(),lang),
+  phone:el.phone.value.trim(),date:el.date.value,lang,
+  photo:S.photo,logo:S.logo,zoom:S.zoom,ox:S.ox,oy:S.oy,emoji:el.emoji.checked,hint:false
+ },over||{});
+}
+
+/* ---------- चित्र काढणे ---------- */
+function roundRectPath(c,x,y,w,h,r){c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function shapePath(c,frame,x,y,s,u){c.beginPath();if(frame===0||frame===2)c.arc(x+s/2,y+s/2,s/2,0,Math.PI*2);else roundRectPath(c,x,y,s,s,frame===1?u*2:u*5);c.closePath()}
+function wrapLines(c,text,maxW){
+ const words=text.split(/\s+/).filter(Boolean),lines=[];let cur='';
+ for(const w of words){const t=cur?cur+' '+w:w;if(c.measureText(t).width<=maxW||!cur)cur=t;else{lines.push(cur);cur=w}}
+ if(cur)lines.push(cur);return lines;
+}
+function layoutText(c,text,maxW,size,minSize,maxLines,font,weight){
+ let s=size,lines=[];
+ if(!text)return{lines:[],s:0,h:0};
+ for(;;){
+  c.font=`${weight} ${s}px ${fontStack(font)}`;
+  lines=wrapLines(c,text,maxW);
+  const ok=lines.length<=maxLines&&lines.every(l=>c.measureText(l).width<=maxW);
+  if(ok||s<=minSize)break;
+  s=Math.max(minSize,s-2);
+ }
+ return{lines,s,h:lines.length*s*1.3};
+}
+
+function render(canvas,w,h,st){
+ const c=canvas.getContext('2d');canvas.width=w;canvas.height=h;
+ const r=rng(st.num+st.cat*1000);
+ const pal=PAL[st.cat][Math.floor(r()*10)];
+ const font=FONTS[Math.floor(r()*FONTS.length)];
+ const pattern=Math.floor(r()*5),frame=Math.floor(r()*4),layout=Math.floor(r()*2),panelPick=r();
+ const u=Math.min(w,h)/100;
+
+ const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,pal[0]);g.addColorStop(1,pal[1]);
+ c.fillStyle=g;c.fillRect(0,0,w,h);
+
+ c.save();c.globalAlpha=.15;c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=u*.6;
+ if(pattern===0){for(let i=0;i<40;i++){c.beginPath();c.arc(r()*w,r()*h,u*(2+r()*8),0,7);c.fill()}}
+ if(pattern===1){for(let x=-h;x<w;x+=u*8){c.beginPath();c.moveTo(x,0);c.lineTo(x+h,h);c.stroke()}}
+ if(pattern===2){for(let x=0;x<w;x+=u*10)for(let y=0;y<h;y+=u*10){c.beginPath();c.arc(x,y,u*1.2,0,7);c.fill()}}
+ if(pattern===3){const R=Math.hypot(w,h);for(let i=0;i<14;i++){const a=i*.449;c.beginPath();c.moveTo(w/2,h/2);c.lineTo(w/2+Math.cos(a)*R,h/2+Math.sin(a)*R);c.lineTo(w/2+Math.cos(a+.2)*R,h/2+Math.sin(a+.2)*R);c.closePath();c.fill()}}
+ if(pattern===4){c.fillRect(0,h*.65,w,h*.35);c.beginPath();c.arc(w*.9,h*.1,u*25,0,7);c.fill()}
+ c.restore();
+ c.strokeStyle='#fff';c.lineWidth=u*1.5;c.strokeRect(u*2,u*2,w-u*4,h-u*4);
+
+const wide=w>h*1.3,tall=h>w*1.3,barH=st.phone?u*10:0;
+ // सजावट (सर्वात मागच्या थरात, म्हणजे मजकूर आणि फोटोच्या खाली)
+ if(st.emoji){
+  const em=CATS[st.cat].e,es=u*9;c.save();c.textBaseline='top';c.font=`${es}px ${EMOJI_FONT}`;c.textAlign='left';
+  c.fillText(em[0],u*4,u*4);
+  c.fillText(em[1],u*4,h-barH-es-u*5);
+  c.textAlign='right';
+  if(!st.logo)c.fillText(em[2],w-u*4,u*4);
+  c.fillText(em[2],w-u*4,h-barH-es-u*5);
+  c.restore();
+ }
+ // मजकूराचं मोजमाप आणि फोटोची जागा
+ const dateTxt=st.date?new Date(st.date+'T00:00:00').toLocaleDateString({mr:'mr-IN',hi:'hi-IN',en:'en-IN'}[st.lang]||'en-IN',{day:'numeric',month:'long',year:'numeric'}):'';
+ const gap=u*1.5;
+ let px,py,ps,x0,x1,tw,m,n,d,blockH;
+ const measure=()=>{
+  tw=x1-x0;
+  m=layoutText(c,st.msg,tw,u*(wide?6:7),u*3.5,3,font,'700');
+  n=layoutText(c,st.name,tw,u*(wide?10:11),u*5,2,font,'800');
+  d=layoutText(c,dateTxt,tw,u*4.5,u*3,1,font,'700');
+  blockH=m.h+(m.h&&n.h?gap:0)+n.h+((m.h||n.h)&&d.h?gap:0)+d.h;
+ };
+ let y;
+ if(wide){
+  ps=h*.68;px=layout?w*.07:w-ps-w*.07;py=(h-barH-ps)/2;
+  if(layout){x0=px+ps+w*.04;x1=w-w*.06}else{x0=w*.06;x1=px-w*.04}
+  measure();
+  y=Math.max(u*4,(h-barH-blockH)/2);
+ }else{
+  x0=w*.08;x1=w*.92;measure();
+  const top=tall?Math.max(u*7,h*.07):u*7,room=h-barH-u*5-top-blockH-u*5;
+  ps=Math.max(u*20,Math.min(tall?w*.74:w*.55,room));
+  px=(w-ps)/2;py=top;
+  y=py+ps+Math.max(u*4,(h-barH-u*5-(py+ps)-blockH)/2);
+ }
+ const cx=(x0+x1)/2;
+ st.layoutOut={px,py,ps};
+
+ // फोटो
+ c.save();c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=u*3;shapePath(c,frame,px,py,ps,u);c.fillStyle='#fff';c.fill();c.restore();
+ if(st.photo){
+  c.save();shapePath(c,frame,px,py,ps,u);c.clip();
+  const pw=st.photo.width,ph=st.photo.height,s=Math.max(ps/pw,ps/ph)*st.zoom;
+  const iw=pw*s,ih=ph*s;
+  c.fillStyle='#ddd';c.fillRect(px,py,ps,ps);
+  c.drawImage(st.photo,px+(ps-iw)/2+st.ox*ps,py+(ps-ih)/2+st.oy*ps,iw,ih);
+  c.restore();
+ }else if(st.hint){
+  c.save();shapePath(c,frame,px,py,ps,u);c.clip();c.fillStyle='rgba(255,255,255,.55)';c.fillRect(px,py,ps,ps);
+  c.fillStyle='#777';c.textAlign='center';c.font=`800 ${ps*.12}px ${fontStack('Mukta')}`;c.fillText('फोटो निवडा',px+ps/2,py+ps/2+ps*.04);c.restore();
+ }
+ c.save();shapePath(c,frame,px,py,ps,u);c.strokeStyle=frame>=2?'#ffd600':'#fff';c.lineWidth=u*1.4;c.stroke();c.restore();
+
+ // मजकूर
+ const l0=lum(pal[0]),l1=lum(pal[1]),avg=(l0+l1)/2;
+ const needPanel=Math.abs(l0-l1)>.3||panelPick<.5;
+ const dark=!needPanel&&avg>.55;
+ if(blockH>0&&needPanel){c.save();c.fillStyle='rgba(0,0,0,.32)';c.beginPath();roundRectPath(c,x0-u*2,y-u*1.5,tw+u*4,blockH+u*3,u*3);c.fill();c.restore()}
+ const draw=(blk,yy)=>{
+  c.textAlign='center';c.textBaseline='alphabetic';
+  blk.lines.forEach((ln,i)=>{
+   c.font=blk.font;const by=yy+blk.s*1.0+i*blk.s*1.3;
+   if(!dark){c.lineJoin='round';c.lineWidth=u*.7;c.strokeStyle='rgba(0,0,0,.35)';c.strokeText(ln,cx,by)}
+   c.fillStyle=dark?'#1b1b1b':'#fff';c.fillText(ln,cx,by);
+  });
+ };
+ m.font=`700 ${m.s}px ${fontStack(font)}`;n.font=`800 ${n.s}px ${fontStack(font)}`;d.font=`700 ${d.s}px ${fontStack(font)}`;
+ let yy=y;
+ if(m.h){draw(m,yy);yy+=m.h+gap}
+ if(n.h){draw(n,yy);yy+=n.h+gap}
+ if(d.h){draw(d,yy)}
+ // फोन पट्टी
+ if(st.phone){
+  c.fillStyle='rgba(0,0,0,.55)';c.fillRect(0,h-barH,w,barH);
+  c.fillStyle='#fff';c.textAlign='center';c.font=`700 ${u*5}px ${fontStack('Mukta')}`;c.textBaseline='middle';
+  c.fillText((st.lang==='en'?'Call: ':'संपर्क: ')+st.phone,w/2,h-barH/2);c.textBaseline='alphabetic';
+ }
+ // लोगो
+ if(st.logo){const ls=u*14,s=Math.min(ls/st.logo.width,ls/st.logo.height);c.drawImage(st.logo,w-st.logo.width*s-u*4,u*4,st.logo.width*s,st.logo.height*s)}
+ return st.layoutOut;
+}
+
+function sizeWH(){return el.size.value.split('x').map(Number)}
+function draw(){const [w,h]=sizeWH();S.layout=render(cv,w,h,curState({hint:true}))}
+let rq=0;function redraw(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;draw()})}
+
+/* ---------- चित्र लोड ---------- */
+async function loadBitmap(file){
+ try{return await createImageBitmap(file)}catch(e){
+  return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(file)});
+ }
+}
+el.photo.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{S.photo=await loadBitmap(f);S.ox=S.oy=0;S.zoom=1;el.zoom.value=1;redraw()}catch(x){setStatus('हा फोटो उघडता आला नाही.')}};
+el.logo.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{S.logo=await loadBitmap(f);redraw()}catch(x){setStatus('हा लोगो उघडता आला नाही.')}};
+el.zoom.oninput=()=>{S.zoom=+el.zoom.value;redraw()};
+el.resetPhoto.onclick=()=>{S.ox=S.oy=0;S.zoom=1;el.zoom.value=1;redraw()};
+
+/* फोटो ओढणे, चाकाने झूम, दोन बोटांनी झूम */
+const ptrs=new Map();let dragLast=null,pinch0=null;
+function canvasPos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}}
+function inPhoto(p){const L=S.layout;return L&&p.x>=L.px&&p.x<=L.px+L.ps&&p.y>=L.py&&p.y<=L.py+L.ps}
+cv.addEventListener('pointerdown',e=>{
+ const p=canvasPos(e);
+ if(!S.photo)return;
+ if(ptrs.size===0&&!inPhoto(p))return;
+ ptrs.set(e.pointerId,p);cv.setPointerCapture(e.pointerId);
+ if(ptrs.size===1)dragLast=p;
+ if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0={d:Math.hypot(a.x-b.x,a.y-b.y),z:S.zoom}}
+});
+cv.addEventListener('pointermove',e=>{
+ if(!ptrs.has(e.pointerId))return;
+ const p=canvasPos(e);ptrs.set(e.pointerId,p);
+ if(ptrs.size===2&&pinch0){const [a,b]=[...ptrs.values()];S.zoom=Math.max(.5,Math.min(3,pinch0.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch0.d));el.zoom.value=S.zoom;redraw();return}
+ if(ptrs.size===1&&dragLast&&S.layout){S.ox+=(p.x-dragLast.x)/S.layout.ps;S.oy+=(p.y-dragLast.y)/S.layout.ps;dragLast=p;redraw()}
+});
+const endPtr=e=>{ptrs.delete(e.pointerId);pinch0=null;dragLast=ptrs.size===1?[...ptrs.values()][0]:null};
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('wheel',e=>{if(!S.photo||!inPhoto(canvasPos(e)))return;e.preventDefault();S.zoom=Math.max(.5,Math.min(3,S.zoom*(e.deltaY<0?1.06:.94)));el.zoom.value=S.zoom;redraw()},{passive:false});
+
+/* ---------- फॉर्म ---------- */
+function setStatus(t){el.status.textContent=t}
+function fillCats(){el.cat.innerHTML=CATS.map((c,i)=>`<option value="${i}">${c.n}</option>`).join('')}
+function fillPresets(keepText){
+ const list=CATS[+el.cat.value].p[el.lang.value];
+ el.preset.innerHTML=list.map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+ if(S.presetIdx>=list.length)S.presetIdx=0;
+ el.preset.value=S.presetIdx;
+ if(S.msgIsPreset&&!keepText)el.msg.value=list[S.presetIdx];
+}
+el.preset.onchange=()=>{S.presetIdx=+el.preset.value;S.msgIsPreset=true;el.msg.value=CATS[+el.cat.value].p[el.lang.value][S.presetIdx];save();redraw()};
+el.cat.onchange=()=>{fillPresets();save();redraw()};
+el.lang.onchange=async()=>{
+ fillPresets();
+ for(const k of ['name']){el[k].value=await toLangBest(el[k].value,el.lang.value)}
+ if(!S.msgIsPreset)el.msg.value=await toLangBest(el.msg.value,el.lang.value);
+ save();redraw();
+};
+// टाइप करताना झटपट पूर्वावलोकन, स्पेस/बाहेर क्लिक केल्यावर पक्कं रूपांतर
+function wireText(inp,isMsg){
+ inp.addEventListener('input',()=>{if(isMsg)S.msgIsPreset=false;redraw();save();if(el.lang.value!=='en'&&/\s$/.test(inp.value))convertField(inp)});
+ inp.addEventListener('blur',()=>convertField(inp));
+}
+async function convertField(inp){
+ const lang=el.lang.value;if(lang==='en')return;
+ const before=inp.value;if(!/[A-Za-z]/.test(before))return;
+ const out=await toLangBest(before,lang);
+ if(inp.value===before&&out!==before){inp.value=out;save();redraw()}
+}
+wireText(el.name,false);wireText(el.msg,true);
+['phone','date','size','design','emoji'].forEach(id=>el[id].addEventListener('input',()=>{save();redraw()}));
+el.size.addEventListener('change',redraw);
+const stepDesign=n=>{el.design.value=Math.max(1,Math.min(500,(+el.design.value||1)+n));save();redraw()};
+el.prev.onclick=()=>stepDesign(-1);el.next.onclick=()=>stepDesign(1);
+el.rand.onclick=()=>{el.design.value=1+Math.floor(Math.random()*500);save();redraw()};
+
+/* आवडती डिझाईन्स */
+function renderFavs(){
+ el.favs.innerHTML=favs.map((f,i)=>`<span data-i="${i}">⭐ ${CATS[f.cat].n} #${f.num} ✕</span>`).join('');
+}
+el.fav.onclick=()=>{
+ const f={cat:+el.cat.value,num:+el.design.value||1};
+ if(!favs.some(x=>x.cat===f.cat&&x.num===f.num))favs.push(f);
+ save();renderFavs();setStatus('आवडती डिझाईन सेव्ह झाली.');
+};
+el.favs.onclick=e=>{
+ const t=e.target.closest('span');if(!t)return;
+ const i=+t.dataset.i,f=favs[i];
+ if(e.offsetX>t.offsetWidth-24){favs.splice(i,1)}
+ else{el.cat.value=f.cat;fillPresets();el.design.value=f.num}
+ save();renderFavs();redraw();
+};
+
+/* साठवण */
+function save(){
+ try{localStorage.setItem('bm2',JSON.stringify({lang:el.lang.value,name:el.name.value,cat:el.cat.value,msg:el.msg.value,msgIsPreset:S.msgIsPreset,presetIdx:S.presetIdx,phone:el.phone.value,date:el.date.value,size:el.size.value,design:el.design.value,emoji:el.emoji.checked,favs}))}catch(e){}
+}
+function load(){
+ let d={};try{d=JSON.parse(localStorage.getItem('bm2')||'{}')}catch(e){}
+ fillCats();
+ if(d.lang)el.lang.value=d.lang;
+ if(d.cat!=null)el.cat.value=d.cat;
+ S.presetIdx=d.presetIdx||0;S.msgIsPreset=d.msgIsPreset!==false;
+ fillPresets();
+ if(d.msg!=null&&!S.msgIsPreset)el.msg.value=d.msg;
+ if(d.name!=null)el.name.value=d.name;
+ if(d.phone!=null)el.phone.value=d.phone;
+ if(d.date!=null)el.date.value=d.date;
+ if(d.size)el.size.value=d.size;
+ if(d.design)el.design.value=d.design;
+ if(d.emoji!=null)el.emoji.checked=d.emoji;
+ favs=Array.isArray(d.favs)?d.favs.filter(f=>f&&CATS[f.cat]):[];
+ renderFavs();
+}
+
+/* ---------- ZIP आणि PDF ---------- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function makeZip(files){
+ const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+ const now=new Date(),dt=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate(),tm=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+ for(const f of files){
+  const nb=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+  const lh=new DataView(new ArrayBuffer(30));
+  lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);
+  lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nb.length,true);lh.setUint16(28,0,true);
+  parts.push(lh.buffer,nb,f.data);
+  const ch=new DataView(new ArrayBuffer(46));
+  ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);
+  ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nb.length,true);ch.setUint32(42,off,true);
+  cen.push(ch.buffer,nb);
+  off+=30+nb.length+sz;
+ }
+ const cenSize=cen.reduce((a,b)=>a+(b.byteLength??b.length),0);
+ const end=new DataView(new ArrayBuffer(22));
+ end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cenSize,true);end.setUint32(16,off,true);
+ return new Blob([...parts,...cen,end.buffer],{type:'application/zip'});
+}
+function makePdf(jpeg,w,h){
+ const enc=new TextEncoder(),k=842/Math.max(w,h),pw=(w*k).toFixed(2),ph=(h*k).toFixed(2);
+ const chunks=[],offs=[];let pos=0;
+ const add=x=>{const b=typeof x==='string'?enc.encode(x):x;chunks.push(b);pos+=b.length};
+ add('%PDF-1.4\n');
+ const obj=(n,body)=>{offs[n]=pos;add(`${n} 0 obj\n`);add(body);add('\nendobj\n')};
+ obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+ obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+ obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+ offs[4]=pos;add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);add(jpeg);add('\nendstream\nendobj\n');
+ const cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+ obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+ const xref=pos;add('xref\n0 6\n0000000000 65535 f \n');
+ for(let i=1;i<=5;i++)add(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+ add(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+ return new Blob(chunks,{type:'application/pdf'});
+}
+const toBlob=(canvas,type,q)=>new Promise(res=>canvas.toBlob(res,type,q));
+const bytesOf=async b=>new Uint8Array(await b.arrayBuffer());
+function saveBlob(blob,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const safe=s=>(s||'').replace(/[^A-Za-z0-9 _-]+/g,'').trim().replace(/\s+/g,'_').slice(0,40)||'banner';
+function offscreen(w,h,st){const c=document.createElement('canvas');render(c,w,h,st);return c}
+
+async function finalState(over){ // डाउनलोडसाठी सर्वात चांगलं रूपांतर
+ const lang=el.lang.value;
+ return curState(Object.assign({name:await toLangBest(el.name.value.trim(),lang),msg:await toLangBest(el.msg.value.trim(),lang),hint:false},over||{}));
+}
+async function busy(label,fn){
+ const btns=document.querySelectorAll('button');btns.forEach(b=>b.disabled=true);setStatus(label);
+ try{await fn()}catch(e){console.error(e);setStatus('काहीतरी चुकलं: '+(e&&e.message||e))}
+ finally{btns.forEach(b=>b.disabled=false)}
+}
+el.dlPng.onclick=()=>busy('PNG बनत आहे...',async()=>{
+ const [w,h]=sizeWH(),st=await finalState();
+ saveBlob(await toBlob(offscreen(w,h,st),'image/png'),'banner-'+st.num+'.png');setStatus('PNG डाउनलोड झाला.');
+});
+el.dlPdf.onclick=()=>busy('PDF बनत आहे...',async()=>{
+ const [w,h]=sizeWH(),st=await finalState();
+ const jpg=await bytesOf(await toBlob(offscreen(w,h,st),'image/jpeg',.93));
+ saveBlob(makePdf(jpg,w,h),'banner-'+st.num+'.pdf');setStatus('PDF डाउनलोड झाला.');
+});
+el.dlAll.onclick=()=>busy('तिन्ही साईझ बनत आहेत...',async()=>{
+ const st=await finalState(),files=[];
+ for(const [lbl,w,h] of [['whatsapp-status',1080,1920],['facebook-post',1080,1080],['flex-print',2400,1200]]){
+  files.push({name:`banner-${st.num}-${lbl}.png`,data:await bytesOf(await toBlob(offscreen(w,h,st),'image/png'))});
+ }
+ saveBlob(makeZip(files),'banner-'+st.num+'-all-sizes.zip');setStatus('ZIP डाउनलोड झाला.');
+});
+el.share.onclick=()=>busy('शेअर करत आहे...',async()=>{
+ const [w,h]=sizeWH(),st=await finalState();
+ const blob=await toBlob(offscreen(w,h,st),'image/png'),file=new File([blob],'banner-'+st.num+'.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'बॅनर'});setStatus('');return}catch(e){if(e&&e.name==='AbortError'){setStatus('');return}}}
+ saveBlob(blob,file.name);setStatus('या ब्राउझरमध्ये शेअर चालत नाही, म्हणून PNG डाउनलोड केला.');
+});
+
+/* ---------- बॅच ---------- */
+el.batchPhotos.onchange=async e=>{
+ S.batchPhotos.clear();
+ for(const f of e.target.files){
+  try{const bmp=await loadBitmap(f),low=f.name.toLowerCase();S.batchPhotos.set(low,bmp);S.batchPhotos.set(low.replace(/\.[^.]+$/,''),bmp)}catch(x){}
+ }
+ setStatus(`${e.target.files.length} फोटो निवडले.`);
+};
+el.batchGo.onclick=()=>busy('बॅच सुरू...',async()=>{
+ const rows=el.batchText.value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+ if(!rows.length){setStatus('आधी बॉक्समध्ये नावं लिहा, प्रत्येक ओळीत एक.');return}
+ const [w,h]=sizeWH(),lang=el.lang.value,files=[],used=new Set();
+ const baseNum=+el.design.value||1;
+ for(let i=0;i<rows.length;i++){
+  setStatus(`बॅनर ${i+1} / ${rows.length}`);
+  const parts=rows[i].split(/\s*[|\t]\s*/);
+  const nm=await toLangBest(parts[0]||'',lang);
+  const ms=parts[1]?await toLangBest(parts[1],lang):toLang(el.msg.value.trim(),lang);
+  let ph=S.photo;
+  const key=(parts[2]||parts[0]||'').toLowerCase().trim();
+  const hit=S.batchPhotos.get(key)||S.batchPhotos.get(key.replace(/\.[^.]+$/,''));
+  if(hit)ph=hit;
+  const num=el.batchVary.checked?((baseNum-1+i)%500)+1:baseNum;
+  const st=curState({name:nm,msg:ms,photo:ph,zoom:hit?1:S.zoom,ox:hit?0:S.ox,oy:hit?0:S.oy,num,hint:false});
+  let fn=safe(parts[0]),n=2;const f0=fn;while(used.has(fn)){fn=f0+'_'+n++}used.add(fn);
+  files.push({name:`${String(i+1).padStart(3,'0')}-${fn}.png`,data:await bytesOf(await toBlob(offscreen(w,h,st),'image/png'))});
+  await new Promise(r=>setTimeout(r));
+ }
+ saveBlob(makeZip(files),'banners.zip');setStatus(`${files.length} बॅनर ZIP मध्ये डाउनलोड झाले.`);
+});
+
+/* ---------- ॲप इन्स्टॉल ---------- */
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;el.installBtn.style.display='inline-block'});
+el.installBtn.onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;el.installBtn.style.display='none'};
+window.addEventListener('appinstalled',()=>{el.installBtn.style.display='none'});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+
+/* ---------- सुरू ---------- */
+load();
+draw();
+// canvas चे फॉन्ट लोड झाल्यावर पुन्हा काढा (नाहीतर पहिल्यांदा चुकीचा फॉन्ट दिसतो)
+if(document.fonts&&document.fonts.load){
+ Promise.all(FONTS.map(f=>document.fonts.load(`700 40px "${f}"`,'अआकखAa').catch(()=>0))).then(()=>{draw()});
+ document.fonts.ready.then(()=>draw());
+}
+window.__bm={ruleTr,toLang,render,makeZip,makePdf,curState};
+</script>
+</body>
+</html>
